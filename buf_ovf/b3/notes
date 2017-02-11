@@ -1,0 +1,9 @@
+0x08048468 <+20>:	lea    eax,[ebp-0x48]
+
+0xffffcff0
+
+ebp at 0xffffd038, eip at 0xffffd04c
+
+92:	first
+72:	third
+20:	second

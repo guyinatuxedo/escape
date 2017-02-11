@@ -6,7 +6,7 @@ void not_important()
 	{
 	char buf0[100];
 	fgets(buf0, sizeof(buf0), stdin);
-	printf(buf0);
+	printf("%s\n", buf0);
 
 	if (unimportant_var0)
 		{
