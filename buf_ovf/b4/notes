@@ -1,0 +1,7 @@
+   0x08048414 <+9>:	lea    eax,[ebp-0x48]
+
+0xffffcff0:	0x33323130
+
+  ebp at 0xffffd038, eip at 0xffffd03c
+
+76

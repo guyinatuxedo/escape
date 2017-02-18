@@ -35,10 +35,40 @@ guyinatuxedo@tux:/Hackery/escape/rev_eng/r0$ gdb ./r0
 
 One wall of text later...
 
+Let's set a breakpoint for right after the call to puts, so we can see what it is about to print out
 ```
-gdb-peda$ b *0x08048424
-Breakpoint 1 at 0x8048424
+gdb-peda$ b *0x08048429
+Breakpoint 1 at 0x8048429
 gdb-peda$ r
+Starting program: /Hackery/escape/rev_eng/r0/r0 
 ```
 
+Another wall of text later...
+
+Now since looking at the assembly, right before puts is called there are two sub instructions directed at the esp register. Since arguments are pushed onto the stack prior to a function call, the string might be in that register. Let's take a look
+```
+gdb-peda$ x/20x $esp
+0xffffd030:	0x080484c0	0xffffd0f4	0xffffd0fc	0x08048461
+0xffffd040:	0xf7fb43dc	0xffffd060	0x00000000	0xf7e1a637
+0xffffd050:	0xf7fb4000	0xf7fb4000	0x00000000	0xf7e1a637
+0xffffd060:	0x00000001	0xffffd0f4	0xffffd0fc	0x00000000
+0xffffd070:	0x00000000	0x00000000	0xf7fb4000	0xf7ffdc04
+```
+
+So we can see a memory address at 0x080484c0 in the register. This appears to be a static memory address. Let's see examine the contents of it as a string.
+
+```
+gdb-peda$ x/s 0x080484c0
+0x80484c0:	"Hello World!"
+```
+
+So it is safe to say that the string it prints out is "Hello World!". Let's run the program to see if it matches this.
+
+```
+guyinatuxedo@tux:/Hackery/escape/rev_eng/r0$ ./r0
+Hello World!
+guyinatuxedo@tux:/Hackery/escape/rev_eng/r0$ 
+```
+
+So just like that, we reversed the binary.
  
