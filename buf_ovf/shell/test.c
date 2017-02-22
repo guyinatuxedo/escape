@@ -5,9 +5,10 @@
 
 void h()
 {
-  char buffer[64];
+  char* buffer[64];
 
   gets(buffer);
+  printf("%p\n", &buffer);
 }
 
 int main()

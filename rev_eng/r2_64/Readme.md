@@ -61,38 +61,49 @@ Left off here............................
 
 
 ```
-gdb-peda$ x/d $ebp-0xc
-0xffffd03c: 0
+Breakpoint 1, 0x000000000040054b in main ()
+gdb-peda$ x/d $rbp-0x4
+0x7fffffffde5c:   18020308384481280
 gdb-peda$ c
+Continuing.
 ```
 
 ```
-gdb-peda$ x/d $ebp-0xc
-0xffffd03c: 1
+Breakpoint 1, 0x000000000040054b in main ()
+gdb-peda$ x/d $rbp-0x4
+0x7fffffffde5c:   18020308384481281
 gdb-peda$ c
+Continuing.
 ```
 
 ```
-gdb-peda$ x/d $ebp-0xc
-0xffffd03c: 2
+Breakpoint 1, 0x000000000040054b in main ()
+gdb-peda$ x/d $rbp-0x4
+0x7fffffffde5c:   18020308384481282
 gdb-peda$ c
-```
-```
-gdb-peda$ x/d $ebp-0xc
-0xffffd03c: 3
-gdb-peda$ c
+Continuing.
 ```
 
 ```
-gdb-peda$ x/d $ebp-0xc
-0xffffd03c: 4
+Breakpoint 1, 0x000000000040054b in main ()
+gdb-peda$ x/d $rbp-0x4
+0x7fffffffde5c:   18020308384481283
 gdb-peda$ c
+Continuing.
 ```
 
-And the elf finishes. So judgin from the analysis, the binary starts off with an int that is equal to 0. Then the elf enters a loop where it will run if the int is less than 4. Each time the loop runs, it prints out the current value of the int along with a sentance, and increments the int by one. In the end the loop should run five times. Let's actually run the elf outside of gdb.
+```
+Breakpoint 1, 0x000000000040054b in main ()
+gdb-peda$ x/d $rbp-0x4
+0x7fffffffde5c:   18020308384481284
+gdb-peda$ c
+Continuing.
+```
+
+And the elf finishes. As you can notice, the decmial stored at $rbp-0x4 is farily large, however if we look at the last decimal place we see a pattern. It is incremented by one for each iteration of the loop. Since it is 64 bit, it handles it's ints differently however currently the program recognizes the value of that stack variable to be the last decimal place (what it was told to be). So juding from the analysis, the binary starts off with an int that is equal to 0. Then the elf enters a loop where it will run if the int is less than 4. Each time the loop runs, it prints out the current value of the int along with a sentance, and increments the int by one. In the end the loop should run five times. Let's actually run the elf outside of gdb.
 
 ```
-guyinatuxedo@tux:/Hackery/escape/rev_eng/r2$ ./r2
+guyinatuxedo@tux:/Hackery/escape/rev_eng/r2_64$ ./r2_64
 The current value of i is 0
 The current value of i is 1
 The current value of i is 2
@@ -103,7 +114,7 @@ The current value of i is 4
 So that matches what we thought would happen. Let's compare our findings against the actual C code...
 
 ```
-guyinatuxedo@tux:/Hackery/escape/rev_eng/r2$ cat r2.c
+guyinatuxedo@tux:/Hackery/escape/rev_eng/r2_64$ cat r2_64.c
 #include <stdlib.h>
 #include <stdio.h>
 
