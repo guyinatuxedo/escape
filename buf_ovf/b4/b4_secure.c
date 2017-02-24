@@ -5,7 +5,7 @@ void nothing()
 {
 	char* buf0[50];
 	printf("%p\n", &buf0);
-	gets(buf0);
+	fgets(*buf0, sizeof(*buf0), stdin);
 }
 
 int main()
