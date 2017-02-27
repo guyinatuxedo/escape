@@ -9,7 +9,7 @@ int main()
     gets(buffer);
     if(g)
     {
-        printf("Your first trainning is complete operative.\n");
+        printf("Wait aren't you supposed to be researching? Level Cleared!\n");
     }
 
 }

