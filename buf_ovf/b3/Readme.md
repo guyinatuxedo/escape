@@ -31,8 +31,8 @@ void end()
 }
 ```
 
-So we can see here, our objective is to get the code to run the end() function. However it isn't called anywhere in the code, or given the oppurtunity to through th euse of something like an if then stat$
-in the fun0() function, it has a buffer overflow vulnerabillity. We can use the buffer overflow vulnerabillity to overflow the eip register (since it is 32 bit) to change the return address to that of th$
+So we can see here, our objective is to get the code to run the end() function. However it isn't called anywhere in the code, or given the oppurtunity to through the use of something like an if then statement. However 
+in the fun0() function, it has a buffer overflow vulnerabillity. We can use the buffer overflow vulnerabillity to overflow the eip register (since it is 32 bit) to change the return address to that of the end() functio, so when the fun0 function finishes it will run the end() function.
 
 We will need to calculate the difference between the start of our input and where the eip register is stored. For this we can use gdb.
 
@@ -88,7 +88,7 @@ gdb-peda$ print end
 $1 = {<text variable, no debug info>} 0x8048496 <end>
 ```
 
-So we have the location of where the buffer starts, which is 0xffffcfcc. In addition to that we also have the location of the eip register 0xffffd03c, and the location of the end() function 0x8048496. No$
+So we have the location of where the buffer starts, which is 0xffffcfcc. In addition to that we also have the location of the eip register 0xffffd03c, and the location of the end() function 0x8048496. Now to calculate the offset between the start of our input, and the eip register.
 
 ```
 root@tux:/home/guyinatuxedo# python
