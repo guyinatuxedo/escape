@@ -81,8 +81,7 @@ $1 = {<text variable, no debug info>} 0x7ffff7a53390 <__libc_system>
 And onto the quest for the holy grail
 
 ```
->>> 0x7fffffffde58 - 0x7fffffffdcc0
-408
+0x7fffffffde58 - 0x7fffffffdcc0 = 408
 ```
 
 So we the offset between the start of our input and the rip register is 408. We also have the system() address from libc, which is 0x7ffff7a53390. We also have the address of the string "/bin/sh" from libc which is 0x7ffff7b9a177. There is still one more piece we need for the exploit. With this binary, the argument is passed to the function via the registers instead of just being on the stack. This means that we will have to use Return Oriented Programming (ROP) to find a piece of assembly code (referred to as a gadget) that will pop an argument off of the stack and into a register for the system call to read. All the ROP gadget is, is it is a piece of assembly code already somewhere in the function that we will call. The specifi register we should be looking for are rdi, or it's 32 bit counterpart edi. Reason for this being is that should be the first place a function argument is stored. To find it, i will be using a tool called ROPGadget. If you are running the vm I made, it should already be installed. If not, here is the link to the github page.
