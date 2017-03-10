@@ -28,7 +28,7 @@ End of assembler dump.
 
 ```
 
-So we can see, right off the bat at  main+17, it moves the hex value 0x0 (decimal for 0) into the memory location ebp-0xc. Then at main+24, it jumps to main+49 using a jmp insruction. At main+49 it compares the value stored at ebp-0xc against 0x4 (decimal for 4), and if it less than 4 it jumps to main+26 with a jle instruction. After it reaches main+26, it appears to print something out then add 1 to the value stored at ebp-0xc, then run the same cmp instruction. So what we are looking at there is probably a loop (while or for), that will run as long as an integer is less than 4. That integer probably starts off at 0. For each iteration of the loop, the integer has one added to it. Let's find out what it is.
+So we can see, right off the bat at  main+17, it moves the hex value 0x0 (decimal for 0) into the memory location ebp-0xc. Then at main+24, it jumps to main+49 using a jmp insruction. At main+49 it compares the value stored at ebp-0xc against 0x4 (decimal for 4), and if it less than or equal to 4 it jumps to main+26 with a jle instruction. After it reaches main+26, it appears to print something out then add 1 to the value stored at ebp-0xc, then run the same cmp instruction. So what we are looking at there is probably a loop (while or for), that will run as long as an integer is less than 4. That integer probably starts off at 0. For each iteration of the loop, the integer has one added to it. Let's find out what it is.
 
 ```
 gdb-peda$ b *main+42

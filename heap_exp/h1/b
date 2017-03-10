@@ -1,0 +1,38 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+
+struct space
+{
+	char *ice;
+};
+
+void important()
+{
+	printf("Isn't space wonderful? Level Cleared\n");
+}
+
+int main(int argc, char **argv)
+{
+	/*if (argc != 3)
+	{
+		printf("This is not enough space for you and the research.\n");
+		_exit(0);
+	}*/
+
+	struct space *asteroid, *star;
+
+	asteroid = malloc(sizeof(struct space));
+	star = malloc(sizeof(struct space));
+
+	asteroid->ice = malloc(8);
+	star->ice = malloc(8);
+
+	strcpy(asteroid->ice, argv[1]);
+	strcpy(star->ice, argv[2]);
+
+	printf("Just imagine how many stars are out there.\n");
+
+}

@@ -23,7 +23,7 @@ End of assembler dump.
 gdb-peda$ 
 ```
 
-So we can see, right off the bat at  main+8, it moves the hex value 0x0 (decimal for 0) into the memory location rbp-0x4. Then at main+15, it jumps to main+41 using a jmp insruction. At main+41 it compares the value stored at rbp-0x4 against 0x4 (decimal for 4), and if it less than 4 it jumps to main+17 with a jle instruction. After it reaches main+17, it appears to print something out then add 1 to the value stored at rbp-0x4, then run the same cmp instruction. So what we are looking at there is probably a loop (while or for), that will run as long as an integer is less than 4. That integer probably starts off at 0. For each iteration of the loop, the integer has one added to it. Let's find out what it is.
+So we can see, right off the bat at  main+8, it moves the hex value 0x0 (decimal for 0) into the memory location rbp-0x4. Then at main+15, it jumps to main+41 using a jmp insruction. At main+41 it compares the value stored at rbp-0x4 against 0x4 (decimal for 4), and if it less than or equal to 4 it jumps to main+17 with a jle instruction. After it reaches main+17, it appears to print something out then add 1 to the value stored at rbp-0x4, then run the same cmp instruction. So what we are looking at there is probably a loop (while or for), that will run as long as an integer is less than 4. That integer probably starts off at 0. For each iteration of the loop, the integer has one added to it. Let's find out what it is.
 
 ```
 gdb-peda$ b *main+37
@@ -52,55 +52,57 @@ So this is something new. It appears to be printing out a decimal value, that is
 
 Also, picking up from where we left off in gdb, if we examine the value of $rbp-0x4, see see that is incremented by one each time the loop runs.
 
-
-
-Left off here............................
-
-
-
-
-
 ```
 Breakpoint 1, 0x000000000040054b in main ()
+gdb-peda$ x/w $rbp-0x4
+0x7fffffffde5c:   0x00000000
 gdb-peda$ x/d $rbp-0x4
-0x7fffffffde5c:   18020308384481280
+0x7fffffffde5c:   0
 gdb-peda$ c
 Continuing.
 ```
 
 ```
 Breakpoint 1, 0x000000000040054b in main ()
+gdb-peda$ x/w $rbp-0x4
+0x7fffffffde5c:   0x00000001
 gdb-peda$ x/d $rbp-0x4
-0x7fffffffde5c:   18020308384481281
+0x7fffffffde5c:   1
 gdb-peda$ c
 Continuing.
 ```
 
 ```
 Breakpoint 1, 0x000000000040054b in main ()
+gdb-peda$ x/w $rbp-0x4
+0x7fffffffde5c:   0x00000002
 gdb-peda$ x/d $rbp-0x4
-0x7fffffffde5c:   18020308384481282
+0x7fffffffde5c:   2
 gdb-peda$ c
 Continuing.
 ```
 
 ```
 Breakpoint 1, 0x000000000040054b in main ()
+gdb-peda$ x/w $rbp-0x4
+0x7fffffffde5c:   0x00000003
 gdb-peda$ x/d $rbp-0x4
-0x7fffffffde5c:   18020308384481283
+0x7fffffffde5c:   3
 gdb-peda$ c
 Continuing.
 ```
 
 ```
 Breakpoint 1, 0x000000000040054b in main ()
+gdb-peda$ x/w $rbp-0x4
+0x7fffffffde5c:   0x00000004
 gdb-peda$ x/d $rbp-0x4
-0x7fffffffde5c:   18020308384481284
+0x7fffffffde5c:   4
 gdb-peda$ c
 Continuing.
 ```
 
-And the elf finishes. As you can notice, the decmial stored at $rbp-0x4 is farily large, however if we look at the last decimal place we see a pattern. It is incremented by one for each iteration of the loop. Since it is 64 bit, it handles it's ints differently however currently the program recognizes the value of that stack variable to be the last decimal place (what it was told to be). So juding from the analysis, the binary starts off with an int that is equal to 0. Then the elf enters a loop where it will run if the int is less than 4. Each time the loop runs, it prints out the current value of the int along with a sentance, and increments the int by one. In the end the loop should run five times. Let's actually run the elf outside of gdb.
+As you can see, the decimal value value starts at 0 and increments every loop iteration untill it reaches 4. We see this by the fact we analyze the integer stored at rbp-0x4 as a word, then a decimal each time it runs (there is a glitch with peda that of you try to analyze it as a decimal before a word or string, it will print out something that isn't the decimal). This along with our previous finding would lead us to believe that this a program that has a loop that compares an int that starts at 0 to 4, and if it is less than 5 it will print out the current value, add one, and then check it again. Let's verify this with the source code.
 
 ```
 guyinatuxedo@tux:/Hackery/escape/rev_eng/r2_64$ ./r2_64
@@ -130,4 +132,5 @@ int main()
 ```
 
 And just like that we reversed the binary.
+
 
