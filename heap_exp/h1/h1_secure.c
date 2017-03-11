@@ -20,13 +20,28 @@ int main(int argc, char **argv)
 		puts("You need two arguments in addition to the elf's name to research this.\n");
 		exit(0);
 	}
+	if (argc = 3)
+	{
+		if (strlen(argv[1]) > 9)
+		{
+			printf("Inputs must be less than 10 characters.\n");
+			exit(0);
+		}
+		
+		if (strlen(argv[2]) > 9)
+		{
+			printf("Inputs must be less than 10 characters.\n");
+			exit(0);
+		}
+		
+	}
 	struct space *sun, *moon;
 
 	sun = malloc(sizeof(struct space));
-	sun->star = malloc(10);
+	sun->star = malloc(sizeof(*argv[1]));
 
 	moon = malloc(sizeof(struct space));
-	moon->star = malloc(10);
+	moon->star = malloc(sizeof(*argv[2]));
 
 	strcpy(sun->star, argv[1]);
 	strcpy(moon->star, argv[2]);
