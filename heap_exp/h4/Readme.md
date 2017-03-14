@@ -96,7 +96,7 @@ malloc(60)                                       = 0x804c210
 malloc(9)                                        = 0x804c250
 ```
 
-The first thing we notice is that the size of the mallocs of centari, castor, and vega are 60. The program allocates 50 bytes for the pulsar char, and 4 bytes each for the cluster int and ion pointers That should make 58 bytes, not 60. However gcc added two bytes worth of padding to the end of pulsar, that way the two pointers after it could be stored in their own word, or 4 bytes segment (because 50 % 4 = 2, however 52 % 4 = 0). Just for demonstration I modified the code to fill in the buffer with 50 characters with the following line of code.
+The first thing we notice is that the size of the mallocs of centari, castor, and vega are 60. The program allocates 50 bytes for the pulsar char, and 4 bytes each for the cluster int and ion pointers That should make 58 bytes, not 60. However gcc added two bytes worth of padding to the end of pulsar, that way the two pointers after it could be stored in their own word, or 4 bytes segment (because 58 % 4 = 2, however 60 % 4 = 0). Just for demonstration I modified the code to fill in the buffer with 50 characters with the following line of code.
 
 ```
    strcpy(centari->pulsar, "00000000000000000000000000000000000000000000000000");
@@ -282,7 +282,7 @@ gdb-peda$ x/d 0x804c1a4
 0x804c1a4:  45
 ```
 
-So we have the address that the value is stored at, 0x0804c1a4. Now we need to figure out the offset needed to reach vega->ion. We know that our offset starts at 0x804c200, and it should be 56 bytes after 0x804c210 (because the ion pointer is four bytes, and the last thing declared in the struct). 
+So we have the address that the value is stored at, 0x0804c1a4. Now we need to figure out the offset needed to reach vega->ion. We know that our offset starts at 0x804c200, and it should be 56 bytes after 0x804c210 (because the last thing declared in the struct is the 4 byte ion pointer). 
 
 ```
 0x804c210 + 56 = 0x804c248
@@ -441,4 +441,3 @@ As you can see, all of the data has been written over. Just like that we patched
 
 
 
-python -c 'print "0"*72 + "\xa4\xc1\x04\x08"' | ./h4
