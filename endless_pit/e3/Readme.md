@@ -70,7 +70,7 @@ $ cat out
 Really, you can do anything you want and you want to leave!?
 $ exit
 $ exit
-Since we are falling down a bottoless pit, what do you want to do?
+Since we are falling down a bottoless pit, what do you want to do? Level Cleared!
 ^C
 ```
 
