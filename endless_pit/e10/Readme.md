@@ -1,8 +1,72 @@
-This writeup is essentially just documentaion for the Pwnableharness project which was made by c0deh4h4cker. I had/have no hand in it's creation or maitenance. If you want to, you can check out the project here.
+This writeup is essentially just documentaion for using gcc andthe Pwnableharness project which was made by c0deh4h4cker to make ctf challenges. I had/have no hand in it's creation or maitenance. If you want to, you can check out the project here.
 
 ```
 https://github.com/C0deH4cker/PwnableHarness
 ```
+
+First using gcc.
+
+```
+flags of interest:
+-o                      Designate where you want the binary, and what it is to be called
+-m32                    Designate you want the binary to be 32 bit
+-m64                    Designate you want the binary to be 64 bit
+-fno-stack-protector    Desingate you want the binary to not have a stack canary
+-z execstack            Designate you want the binary to have an executable stack
+-z norelro              Designate you want the binary to have no relro enabled
+```
+
+Now for examples with gcc. Here is my challenge (b0 from buf_ovf).
+
+```
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+    char buffer[489];
+    int g;
+    g = 0;
+    gets(buffer);
+    if(g)
+    {
+        printf("Wait aren't you supposed to be researching? Level Cleared!\n");
+    }
+
+}
+```
+
+Let's say I wanted to compile it as a 32 bit binary without a stack canary, this would be the syntax for it.
+
+```
+guyinatuxedo@tux:/Hackery/escape/buf_ovf/b0 (master)$ gcc b0.c -o b0 -m32 -fno-stack-protector
+b0.c: In function ‘main’:
+b0.c:9:5: warning: implicit declaration of function ‘gets’ [-Wimplicit-function-declaration]
+     gets(buffer);
+     ^
+/tmp/ccVJ2ymn.o: In function `main':
+b0.c:(.text+0x26): warning: the `gets' function is dangerous and should not be used.
+```
+
+As you can see, it gives a warning about the insecure gets function. Now for an example where I want to compile it as a 64 bit binary with an executable stack, no relro or stack canary.
+
+```
+guyinatuxedo@tux:/Hackery/escape/buf_ovf/b0 (master)$ gcc b0.c -o b0_64 -m64 -fno-stack-protector -z execstack -z norelro
+b0.c: In function ‘main’:
+b0.c:9:5: warning: implicit declaration of function ‘gets’ [-Wimplicit-function-declaration]
+     gets(buffer);
+     ^
+/tmp/ccZF9si9.o: In function `main':
+b0.c:(.text+0x22): warning: the `gets' function is dangerous and should not be used.
+guyinatuxedo@tux:/Hackery/escape/buf_ovf/b0 (master)$ pwn checksec b0_64[*] '/Hackery/escape/buf_ovf/b0/b0_64'
+    Arch:     amd64-64-little
+    RELRO:    No RELRO
+    Stack:    No canary found
+    NX:       NX disabled
+    PIE:      No PIE
+```
+
+As you can see, we were able to compile the binary as we wanted to. Now onto Pwnableharness from c0deh4cker (which uses gcc).
 
 This challenge is a bit different. Here we are going to make a ctf pwn challenge. CTF pwn challenges will typically run on a remote server, that is accessible via a network connection (usually through netcat). For this, we will be using a project called Pwnableharness made by c0deh4cker which will compile, and run the code automatically. In addition to that we will also setup all of the challenges to run in a docker instance for added security. Docker is a tool that will virtualize applications, and run them in a container. This is beneficial to us, since we can treat that container as a sandbox enviornment, unable to interact with the host OS. This way theoritically if someone were to try to attack the Server through one of the challenges, they couldn't because they would be stuck in the sandbox enviornment (however that doesn't stop everyone). 
 
