@@ -947,27 +947,23 @@ Dump of assembler code for function elev2:
    0x0000000000400a41 <+1>:   mov    rbp,rsp
    0x0000000000400a44 <+4>:   sub    rsp,0x30
    0x0000000000400a48 <+8>:   mov    rax,QWORD PTR fs:0x28
-
    0x0000000000400a51 <+17>:  mov    QWORD PTR [rbp-0x8],rax
    0x0000000000400a55 <+21>:  xor    eax,eax
    0x0000000000400a57 <+23>:  mov    esi,0x38
    0x0000000000400a5c <+28>:  mov    edi,0x1
    0x0000000000400a61 <+33>:  call   0x4006d0 <calloc@plt>
-
    0x0000000000400a66 <+38>:  mov    QWORD PTR [rbp-0x28],rax
    0x0000000000400a6a <+42>:  mov    rax,QWORD PTR [rbp-0x28]
    0x0000000000400a6e <+46>:  movabs rcx,0x726f746176656c65
    0x0000000000400a78 <+56>:  mov    QWORD PTR [rax],rcx
    0x0000000000400a7b <+59>:  movabs rsi,0x726f777373617020
    0x0000000000400a85 <+69>:  mov    QWORD PTR [rax+0x8],rsi
-   0x0000000000400a89 <+73>:  mov    WORD PTR [rax+0x10],0x64
-   
+   0x0000000000400a89 <+73>:  mov    WORD PTR [rax+0x10],0x64   
    0x0000000000400a8f <+79>:  mov    rdx,QWORD PTR [rip+0x2015ea]        # 0x602080 <stdin@@GLIBC_2.2.5>
    0x0000000000400a96 <+86>:  lea    rax,[rbp-0x20]
    0x0000000000400a9a <+90>:  mov    esi,0x13
    0x0000000000400a9f <+95>:  mov    rdi,rax
-   0x0000000000400aa2 <+98>:  call   0x4006c0 <fgets@plt>
-   
+   0x0000000000400aa2 <+98>:  call   0x4006c0 <fgets@plt>   
    0x0000000000400aa7 <+103>: mov    rcx,QWORD PTR [rbp-0x28]
    0x0000000000400aab <+107>: lea    rax,[rbp-0x20]
    0x0000000000400aaf <+111>: mov    edx,0x11
@@ -979,8 +975,7 @@ Dump of assembler code for function elev2:
    0x0000000000400ac3 <+131>: mov    edi,0x400d34
    0x0000000000400ac8 <+136>: call   0x400670 <puts@plt>
    0x0000000000400acd <+141>: mov    edi,0x0
-   0x0000000000400ad2 <+146>: call   0x400700 <exit@plt>
-   
+   0x0000000000400ad2 <+146>: call   0x400700 <exit@plt>   
    0x0000000000400ad7 <+151>: nop
    0x0000000000400ad8 <+152>: mov    rax,QWORD PTR [rbp-0x8]
    0x0000000000400adc <+156>: xor    rax,QWORD PTR fs:0x28
