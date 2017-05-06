@@ -1,21 +1,24 @@
-#include <stdlib.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 
-int target;
+int target0 = 0;
+int target1 = 0;
 
-void vuln(char *string)
+void fun0()
+	{
+	char buf0[100];
+	fgets(buf0, sizeof(buf0), stdin);
+	printf(buf0);
+
+	if (target0 == 0xace5 && target1 == 0xfacade)
+		{
+		printf("There's a line between taking advantage, and downright exploiting. You have crossed that line. Level Cleared\n");
+		}
+	printf("The value of target0 is %x\n", target0);
+	printf("The value of target1 is %x\n", target1);
+	}
+
+int main()
 {
-  printf(string);
-  
-  if(target) {
-      printf("you have modified the target :)\n");
-  }
+	fun0();
 }
-
-int main(int argc, char **argv)
-{
-  vuln(argv[1]);
-}
-
