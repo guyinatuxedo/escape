@@ -34,6 +34,7 @@ int main()
 
 So looking at the code, we see a couple of things. The first is that this time our buffer overflow is limited to just 450 characters because of the use of read(). Since this binary is using read, that means when we push "\x00" to the stack (because 64 bit C addresses hhave lots of those) it will continue reading it since it is a null byte. If it was fgets, it would just stop reading input. What we can do is we can get the address of the system function from the libc (since it includes the stdlib.c), along with the address of the string "/bin/sh" (which is usually somewhere in libc) and effectivley get a shell. The first thing we will need to do is find the offset to the rip function.
 
+```
 gdb-peda$ disas nothing
 Dump of assembler code for function nothing:
    0x0000000000400536 <+0>: push   rbp
